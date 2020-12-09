@@ -10,6 +10,7 @@ class CPU:
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
+
     
     def load(self, file):
         """Load a program into memory."""
@@ -49,6 +50,8 @@ class CPU:
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
         #elif op == "SUB": etc
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -79,20 +82,24 @@ class CPU:
         HLT = 0b00000001
         LDI = 0b10000010
         PRN = 0b01000111
-        
+        MUL = 0b10100010
+        PUSH = 0b01000101
+        POP = 0b01000110
+        SP = 7
+
+
 
         running = True
-
         pc_count = 0
-        
+        pc = 0
 
         while running:
-            IR = self.ram[self.pc]
-            
+            IR = self.ram[pc]
+            pc_count = ((IR >> 6) & 0b11) + 1
 
             if IR == LDI:
-                register = self.ram[self.pc + 1]
-                value = self.ram[self.pc +  2]
+                register = self.ram[pc + 1]
+                value = self.ram[pc +  2]
                 self.reg[register] = value
                 pc_count = 3
 
@@ -101,12 +108,48 @@ class CPU:
                 pc_count = 1
 
             elif IR == PRN:
-                register = self.ram[self.pc + 1]
+                register = self.ram[pc + 1]
                 value = self.reg[register]
                 print(value)
                 pc_count = 2
 
-            self.pc += pc_count
+            elif IR == MUL:
+                register1 = self.ram[pc + 1]
+                register2 = self.ram[pc + 2]
+                # value1 = self.reg[register1]
+                # value2 = self.reg[register2]
+                self.alu("MUL", register1, register2)
+                pc_count = 3
+
+
+             # PUSH
+            elif IR == PUSH:
+                # decrememt stack pointer
+                self.reg[SP] -= 1
+                # get register #
+                reg_index = self.ram[pc + 1]
+                # get value
+                val = self.reg[reg_index]
+
+                
+
+                # store value 
+                self.ram[self.reg[SP]] = val
+
+                pc_count = 2
+
+        
+            elif IR == POP:
+                
+                reg_index = self.ram[pc + 1]
+                val = self.ram[self.reg[SP]]
+                self.reg[reg_index] = val
+                self.reg[SP] += 1
+                pc_count = 2
+
+            pc += pc_count
+
+       
         
             
         
