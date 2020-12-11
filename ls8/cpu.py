@@ -85,6 +85,8 @@ class CPU:
         MUL = 0b10100010
         PUSH = 0b01000101
         POP = 0b01000110
+        CALL = 0b01010000
+        RET = 0b00010001
         SP = 7
 
 
@@ -130,9 +132,7 @@ class CPU:
                 reg_index = self.ram[pc + 1]
                 # get value
                 val = self.reg[reg_index]
-
                 
-
                 # store value 
                 self.ram[self.reg[SP]] = val
 
@@ -146,6 +146,25 @@ class CPU:
                 self.reg[reg_index] = val
                 self.reg[SP] += 1
                 pc_count = 2
+
+            elif IR == CALL:
+                # push the return address on to the stack
+                self.reg[SP] -= 1
+                self.ram[self.reg[SP]] = pc + 2
+
+                # set the PC to the subroutine address
+                reg = self.ram[pc + 1]
+                pc = self.reg[reg]
+
+                pc_count = 0
+
+            elif IR == RET:
+                # POP return address from stack to store in pc
+                pc = self.ram[self.reg[SP]]
+                self.reg[SP] += 1
+
+                pc_count = 0
+
 
             pc += pc_count
 
